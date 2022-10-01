@@ -1,0 +1,48 @@
+# jetbrains IDE setting file.
+.idea/
+
+# lock
+*.lock
+!Cargo.lock
+
+# pids
+*.pid
+*.seed
+
+# for Windows
+Thumbs.db
+Desktop.ini
+
+# for OSX
+.DS_Store
+
+# swp
+*.swp
+
+### Python template
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# pyenv
+.python-version
+
+# direnv
+.envrc
+
+# .env
+.env
+
+# docker-compose data
+.docker-data/
+
+
+# Rust specific ignores
+target/
+
+# config files
+*.toml
+!rust-toolchain.toml
+!Cargo.toml
+!diesel.toml

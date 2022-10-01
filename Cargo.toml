@@ -1,0 +1,16 @@
+[workspace]
+
+members = [
+    "domain",
+    "server",
+    "dragonfly",
+]
+
+[profile.dev]
+debug = true
+
+[profile.release]
+debug = false
+
+[profile.bench]
+debug = false

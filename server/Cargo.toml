@@ -1,0 +1,24 @@
+[package]
+name = "axum-chat-example-server"
+version = "0.1.0"
+authors = ["Hiroki Tanaka <support@kumano-te.com>"]
+repository = "https://github.com/kumanote/axum-chat-example-server"
+edition = "2021"
+
+[dependencies]
+anyhow = { version = "1.0", features = ["backtrace"] }
+thiserror = "1.0"
+futures = { version = "0.3" }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dotenv = "0.15.0"
+structopt = "0.3.26"
+axum = { version = "0.5", features = ["ws"] }
+tower = { version = "0.4", features = ["util"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+domain = { path = "../domain" }
+dragonfly = { path = "../dragonfly" }
+
+[dev-dependencies]

@@ -1,0 +1,14 @@
+version: '3'
+services:
+  redis:
+    # login by container by `docker exec -it axum-chat-example-redis bash`
+    # inside container you can install redis-cli by `apt-get update && apt-get install redis-server`
+    # then you can use `redis-cli`
+    container_name: axum-chat-example-redis
+    image: docker.dragonflydb.io/dragonflydb/dragonfly
+    ulimits:
+      memlock: -1
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./.docker-data/redis:/data
