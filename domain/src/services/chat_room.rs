@@ -3,7 +3,7 @@ use dragonfly::{RedisConnection, RedisPool};
 use std::sync::mpsc;
 use tokio::sync::broadcast;
 
-pub fn is_username_member(
+fn is_username_member(
     redis_connection: &mut RedisConnection,
     room_name: &str,
     username: &str,
@@ -11,7 +11,7 @@ pub fn is_username_member(
     dragonfly::adapters::sismember(redis_connection, room_name, username).map_err(Into::into)
 }
 
-pub fn add_username_to_room(
+fn add_username_to_room(
     redis_connection: &mut RedisConnection,
     room_name: &str,
     username: &str,
@@ -19,12 +19,49 @@ pub fn add_username_to_room(
     dragonfly::adapters::sadd(redis_connection, room_name, username).map_err(Into::into)
 }
 
-pub fn remove_username_from_room(
+fn remove_username_from_room(
     redis_connection: &mut RedisConnection,
     room_name: &str,
     username: &str,
 ) -> Result<()> {
     dragonfly::adapters::srem(redis_connection, room_name, username).map_err(Into::into)
+}
+
+pub struct ChatRoomUser {
+    redis_pool: RedisPool,
+    room_name: String,
+    username: String,
+}
+
+impl ChatRoomUser {
+    pub fn try_new(redis_pool: RedisPool, room_name: &str, username: &str) -> Result<Option<Self>> {
+        let mut redis_connection = redis_pool.get()?;
+        if is_username_member(&mut redis_connection, room_name, username)? {
+            Ok(None)
+        } else {
+            add_username_to_room(&mut redis_connection, room_name, username)?;
+            Ok(Some(Self {
+                redis_pool,
+                room_name: room_name.to_owned(),
+                username: username.to_owned(),
+            }))
+        }
+    }
+
+    pub fn room_name(&self) -> &str {
+        &self.room_name
+    }
+
+    pub fn username(&self) -> &str {
+        &self.username
+    }
+}
+
+impl Drop for ChatRoomUser {
+    fn drop(&mut self) {
+        let mut redis_connection = self.redis_pool.get().unwrap();
+        remove_username_from_room(&mut redis_connection, &self.room_name, &self.username).unwrap();
+    }
 }
 
 pub struct ChatRoomPublisherService {

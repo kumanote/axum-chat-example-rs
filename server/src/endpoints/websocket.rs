@@ -44,36 +44,32 @@ async fn websocket(stream: WebSocket, state: Arc<AppState>) {
     // By splitting we can send and receive at the same time.
     let (mut sender, mut receiver) = stream.split();
 
-    // Redis connection
-    let mut redis_connection = state.redis_pool.get().unwrap();
-
     // Loop until a text message is found.
     let mut username = String::new();
     while let Some(Ok(message)) = receiver.next().await {
         if let Message::Text(name) = message {
             username = name;
-            if domain::services::chat_room::is_username_member(
-                &mut redis_connection,
-                DEFAULT_ROOM_NAME,
-                &username,
-            )
-            .unwrap()
-            {
-                // Only send our client that username is taken.
-                let _ = sender
-                    .send(Message::Text(String::from("Username already taken.")))
-                    .await;
-                return;
-            }
-            domain::services::chat_room::add_username_to_room(
-                &mut redis_connection,
-                DEFAULT_ROOM_NAME,
-                &username,
-            )
-            .unwrap();
             break;
-        };
+        }
     }
+    tracing::debug!("username: {}", username);
+
+    let chat_room_user = match domain::services::chat_room::ChatRoomUser::try_new(
+        state.redis_pool.clone(),
+        DEFAULT_ROOM_NAME,
+        &username,
+    )
+    .unwrap()
+    {
+        Some(chart_room_user) => chart_room_user,
+        None => {
+            // Only send our client that username is taken.
+            let _ = sender
+                .send(Message::Text(String::from("Username already taken.")))
+                .await;
+            return;
+        }
+    };
 
     // Subscribe before sending joined message.
     let mut broadcast_receiver = state.broadcaster.subscribe();
@@ -123,11 +119,5 @@ async fn websocket(stream: WebSocket, state: Arc<AppState>) {
     };
     tracing::debug!("{:?}", msg);
     let _ = state.publisher.send(msg);
-    // Remove username from map so new clients can take it.
-    domain::services::chat_room::remove_username_from_room(
-        &mut redis_connection,
-        DEFAULT_ROOM_NAME,
-        &username,
-    )
-    .unwrap();
+    drop(chat_room_user);
 }

@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use thiserror::Error as ThisError;
 
 #[derive(ThisError, Debug)]
@@ -10,6 +11,14 @@ impl From<dragonfly::Error> for Error {
     fn from(cause: dragonfly::Error) -> Self {
         Self::SystemError {
             cause: cause.into(),
+        }
+    }
+}
+
+impl From<dragonfly::RedisR2D2Error> for Error {
+    fn from(cause: dragonfly::RedisR2D2Error) -> Self {
+        Self::SystemError {
+            cause: anyhow!(cause),
         }
     }
 }
